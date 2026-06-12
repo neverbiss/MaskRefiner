@@ -3,12 +3,11 @@
 import argparse
 
 import numpy as np
-from PIL import Image
-
 from maskforge.sam3_text_grounding_refiner import (
     create_sam3_text_refiner,
     sam3_text_grounding_refiner,
 )
+from PIL import Image
 
 
 def main():
