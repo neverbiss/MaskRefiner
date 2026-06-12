@@ -7,13 +7,14 @@ IoU prediction calibration.
 
 import argparse
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 from segment_anything import sam_model_registry
 from segment_anything.utils.transforms import ResizeLongestSide
+from torch.utils.data import DataLoader, Dataset
 
 
 class MaskDataset(Dataset):
