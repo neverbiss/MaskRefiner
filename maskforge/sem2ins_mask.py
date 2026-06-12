@@ -45,9 +45,7 @@ def sem2ins_masks(semantic_map, ignore_labels=None):
     return instance_masks, instance_labels
 
 
-def sem2ins_masks_with_area(
-    semantic_map, min_area=100, ignore_labels=None
-):
+def sem2ins_masks_with_area(semantic_map, min_area=100, ignore_labels=None):
     """Convert semantic segmentation to instance masks with area filtering.
 
     Args:
