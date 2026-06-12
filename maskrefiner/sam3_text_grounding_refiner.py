@@ -84,7 +84,7 @@ def sam3_text_grounding_refiner(
                 ious = result.get("iou_predictions", [1.0] * len(masks))
                 best_idx = np.argmax(ious)
                 current_mask = torch.tensor(
-                    masks[best_idx : best_idx + 1], dtype=torch.uint8
+                    masks[best_idx:best_idx + 1], dtype=torch.uint8
                 )
             else:
                 break
