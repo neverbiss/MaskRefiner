@@ -75,7 +75,6 @@ def train_iou_adaption(args):
         filter(lambda p: p.requires_grad, sam.parameters()),
         lr=args.lr,
     )
-    criterion = nn.MSELoss()
 
     for epoch in range(args.train_epoch):
         total_loss = 0
@@ -85,7 +84,7 @@ def train_iou_adaption(args):
 
             # Forward pass with image embeddings
             input_images = torch.stack([sam.preprocess(images[0])], dim=0)
-            image_embeddings = sam.image_encoder(input_images)
+            _ = sam.image_encoder(input_images)
 
             # Simplified training loop
             optimizer.zero_grad()
