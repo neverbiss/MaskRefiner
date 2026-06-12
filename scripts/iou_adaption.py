@@ -14,9 +14,9 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 from segment_anything import sam_model_registry
 from segment_anything.utils.transforms import ResizeLongestSide
-from maskforge.utils import prepare_image
 
-\class MaskDataset(Dataset):
+
+class MaskDataset(Dataset):
     """Dataset for IoU adaption training."""
 
     def __init__(self, data_dir, transform=None):
@@ -86,14 +86,8 @@ def train_iou_adaption(args):
             input_images = torch.stack([sam.preprocess(images[0])], dim=0)
             image_embeddings = sam.image_encoder(input_images)
 
-            # Prepare prompts from ground truth masks
-            from maskforge import extract_points, extract_bboxes_expand
-
             # Simplified training loop
-            # In practice, you'd prepare proper SAM inputs
-
             optimizer.zero_grad()
-            # loss.backward()
             optimizer.step()
 
             total_loss += 0  # placeholder
