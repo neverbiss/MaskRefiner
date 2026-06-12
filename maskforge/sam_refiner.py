@@ -89,9 +89,9 @@ def sam_refiner(
     if len(coarse_masks.shape) == 2:
         coarse_masks = coarse_masks[None:,]
     coarse_masks = torch.tensor(coarse_masks, dtype=torch.uint8).to(sam.device)
-    assert len(coarse_masks.shape) == 3, (
-        f"coarse mask dim must be (n, h, w), but got {coarse_masks.shape}"
-    )
+    assert (
+        len(coarse_masks.shape) == 3
+    ), f"coarse mask dim must be (n, h, w), but got {coarse_masks.shape}"
 
     if resize_transform is None:
         resize_transform = ResizeLongestSide(sam.image_encoder.img_size)
