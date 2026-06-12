@@ -45,7 +45,7 @@ def sam3_refiner(
     refined_masks = []
     for mask_idx in range(coarse_masks.shape[0]):
         current_mask = torch.tensor(
-            coarse_masks[mask_idx : mask_idx + 1], dtype=torch.uint8
+            coarse_masks[mask_idx:mask_idx + 1], dtype=torch.uint8
         )
 
         for iteration in range(iters):
@@ -71,7 +71,7 @@ def sam3_refiner(
                 ious = result.get("iou_predictions", [1.0] * len(masks))
                 best_idx = np.argmax(ious)
                 current_mask = torch.tensor(
-                    masks[best_idx : best_idx + 1], dtype=torch.uint8
+                    masks[best_idx:best_idx + 1], dtype=torch.uint8
                 )
             else:
                 break
