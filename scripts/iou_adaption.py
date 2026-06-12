@@ -10,7 +10,6 @@ import os
 
 import numpy as np
 import torch
-import torch.nn as nn
 from PIL import Image
 from segment_anything import sam_model_registry
 from segment_anything.utils.transforms import ResizeLongestSide
