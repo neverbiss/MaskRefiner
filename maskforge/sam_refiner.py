@@ -27,28 +27,7 @@ def sam_input_prepare(
     gamma=1.0,
     strength=15,
 ):
-    """Prepare SAM decoder inputs from predicted masks.
-
-    Extracts point, box, and mask prompts from the current predictions
-    and formats them for SAM's mask decoder.
-
-    Args:
-        image: (3, H, W) preprocessed image tensor.
-        pred_masks: (N, H, W) binary predicted masks.
-        image_embeddings: (1, C, h, w) image encoder features.
-        resize_transform: ``ResizeLongestSide`` instance for coordinate transforms.
-        use_point: Whether to include point prompts.
-        use_box: Whether to include box prompts.
-        use_mask: Whether to include mask prompts.
-        add_neg: Whether to add negative point prompts.
-        margin: CEBox expansion threshold for box prompts.
-        gamma: Gaussian spread parameter for mask prompts.
-        strength: Amplitude scaling for mask prompts.
-
-    Returns:
-        input_dict: Dictionary of decoder inputs.
-        point_coords: Raw point coordinates (before resize).
-    """
+    """Prepare SAM decoder inputs from predicted masks."""
     ori_size = pred_masks.shape[-2:]
     input_dict = {
         "image": image,
@@ -103,43 +82,16 @@ def sam_refiner(
     ddp=False,
     is_train=False,
 ):
-    """Iteratively refine coarse masks using SAM.
-
-    Given an image and one or more coarse binary masks, generates
-    noise-tolerant prompts and feeds them through SAM's decoder for
-    a configurable number of iterations.
-
-    Args:
-        image_path: Path to the input image.
-        coarse_masks: List of (H, W) numpy arrays or a single (N, H, W) array.
-        sam: SAM model instance.
-        resize_transform: Optional ``ResizeLongestSide`` (auto-created if None).
-        use_point: Use point prompts.
-        use_box: Use box prompts.
-        use_mask: Use mask prompts.
-        add_neg: Include negative point prompts.
-        iters: Number of refinement iterations.
-        margin: CEBox expansion threshold (0 = disabled).
-        gamma: Gaussian spread for mask prompt generation.
-        strength: Amplitude scaling for mask prompts.
-        use_samhq: Use HQ-SAM mode (requires HQ-SAM checkpoint).
-        ddp: Whether model is wrapped in DistributedDataParallel.
-        is_train: If True, returns raw multi-mask outputs for training.
-
-    Returns:
-        refined_masks: (N, H, W) uint8 refined binary masks.
-        sam_ious: IoU predictions from SAM.
-        sam_masks3: All 3 candidate masks from the last iteration.
-    """
+    """Iteratively refine coarse masks using SAM."""
     if isinstance(coarse_masks, list):
         coarse_masks = np.stack(coarse_masks, axis=0)
 
     if len(coarse_masks.shape) == 2:
         coarse_masks = coarse_masks[None:,]
     coarse_masks = torch.tensor(coarse_masks, dtype=torch.uint8).to(sam.device)
-    assert (
-        len(coarse_masks.shape) == 3
-    ), f"coarse mask dim must be (n, h, w), but got {coarse_masks.shape}"
+    assert len(coarse_masks.shape) == 3, (
+        f"coarse mask dim must be (n, h, w), but got {coarse_masks.shape}"
+    )
 
     if resize_transform is None:
         resize_transform = ResizeLongestSide(sam.image_encoder.img_size)
@@ -150,7 +102,9 @@ def sam_refiner(
 
     with torch.no_grad():
         if ddp:
-            input_images = torch.stack([sam.module.preprocess(x) for x in image], dim=0)
+            input_images = torch.stack(
+                [sam.module.preprocess(x) for x in image], dim=0
+            )
             if not use_samhq:
                 image_embeddings = sam.module.image_encoder(input_images)
             else:
@@ -159,11 +113,15 @@ def sam_refiner(
                 )
                 interm_embeddings = interm_embeddings[0]
         else:
-            input_images = torch.stack([sam.preprocess(x) for x in image], dim=0)
+            input_images = torch.stack(
+                [sam.preprocess(x) for x in image], dim=0
+            )
             if not use_samhq:
                 image_embeddings = sam.image_encoder(input_images)
             else:
-                image_embeddings, interm_embeddings = sam.image_encoder(input_images)
+                image_embeddings, interm_embeddings = sam.image_encoder(
+                    input_images
+                )
                 interm_embeddings = interm_embeddings[0]
 
     sam_masks_list = None
@@ -242,20 +200,14 @@ def sam_refiner(
                     )[0]
 
         # Select best mask based on IoU prediction
-        sam_masks = sam_output["masks"]  # (N, 3, H, W)
-        sam_ious = sam_output["iou_predictions"]  # (N, 3)
+        sam_masks = sam_output["masks"]
+        sam_ious = sam_output["iou_predictions"]
         sam_masks3 = sam_masks
 
-        # Choose the mask with highest predicted IoU
-        best_idx = sam_ious.argmax(dim=-1)  # (N,)
-        sam_masks = sam_masks[
-            torch.arange(sam_masks.shape[0]), best_idx
-        ]  # (N, H, W)
-        sam_ious = sam_ious[
-            torch.arange(sam_ious.shape[0]), best_idx
-        ]  # (N,)
+        best_idx = sam_ious.argmax(dim=-1)
+        sam_masks = sam_masks[torch.arange(sam_masks.shape[0]), best_idx]
+        sam_ious = sam_ious[torch.arange(sam_ious.shape[0]), best_idx]
 
-        # Threshold
         sam_masks_list = (sam_masks > 0.0).to(torch.uint8)
 
     return sam_masks_list.cpu().numpy(), sam_ious.cpu().numpy(), sam_masks3
