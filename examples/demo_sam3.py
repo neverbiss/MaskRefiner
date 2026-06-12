@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 from PIL import Image
 
-from maskforge.sam3_refiner import create_sam3_refiner, sam3_refiner
+from maskrefiner.sam3_refiner import create_sam3_refiner, sam3_refiner
 
 
 def main():
