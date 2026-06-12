@@ -1,7 +1,10 @@
 """Demo: SAM3 instance mask refinement."""
+
 import argparse
+
 import numpy as np
 from PIL import Image
+
 from maskforge.sam3_refiner import create_sam3_refiner, sam3_refiner
 
 

@@ -1,8 +1,11 @@
 """Demo: HQ-SAM mask refinement."""
+
 import argparse
+
 import numpy as np
 from PIL import Image
 from segment_anything import sam_model_registry
+
 from maskforge import sam_refiner
 
 
