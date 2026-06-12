@@ -102,9 +102,7 @@ def sam_refiner(
 
     with torch.no_grad():
         if ddp:
-            input_images = torch.stack(
-                [sam.module.preprocess(x) for x in image], dim=0
-            )
+            input_images = torch.stack([sam.module.preprocess(x) for x in image], dim=0)
             if not use_samhq:
                 image_embeddings = sam.module.image_encoder(input_images)
             else:
@@ -113,15 +111,11 @@ def sam_refiner(
                 )
                 interm_embeddings = interm_embeddings[0]
         else:
-            input_images = torch.stack(
-                [sam.preprocess(x) for x in image], dim=0
-            )
+            input_images = torch.stack([sam.preprocess(x) for x in image], dim=0)
             if not use_samhq:
                 image_embeddings = sam.image_encoder(input_images)
             else:
-                image_embeddings, interm_embeddings = sam.image_encoder(
-                    input_images
-                )
+                image_embeddings, interm_embeddings = sam.image_encoder(input_images)
                 interm_embeddings = interm_embeddings[0]
 
     sam_masks_list = None
