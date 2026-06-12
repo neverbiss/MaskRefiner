@@ -22,7 +22,7 @@ jobs:
       - name: Run isort
         run: isort --check-only --profile black maskrefiner/ examples/ scripts/
       - name: Run flake8
-        run: flake8 maskrefiner/ examples/ scripts/ --max-line-length=100
+        run: flake8 maskrefiner/ examples/ scripts/ --max-line-length=100 --extend-ignore=E203
 
   test:
     runs-on: ubuntu-latest
