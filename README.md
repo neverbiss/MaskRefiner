@@ -53,6 +53,19 @@ cd MaskRefiner
 pip install -e .
 ```
 
+## Usage
+
+```python
+from maskrefiner import sam_refiner
+
+refined_masks, ious, candidates = sam_refiner(
+    image_path="image.png",
+    coarse_masks=[mask1, mask2],
+    sam=model,
+    iters=5,
+)
+```
+
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
