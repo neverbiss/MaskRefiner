@@ -9,20 +9,11 @@ import cv2
 import numpy as np
 import torch
 
-from .utils import extract_bboxes_expand, extract_points
+from .utils import extract_points
 
 
 def create_sam3_text_refiner(checkpoint_path, device="cuda"):
-    """Create SAM3 model for text-grounding refinement.
-
-    Args:
-        checkpoint_path: Path to SAM3 checkpoint.
-        device: Target device.
-
-    Returns:
-        sam3_model: SAM3 model instance.
-        processor: Sam3Processor instance.
-    """
+    """Create SAM3 model for text-grounding refinement."""
     from sam3.model import build_sam3_image_model
 
     sam3_model = build_sam3_image_model(checkpoint_path, device=device)
@@ -39,23 +30,7 @@ def sam3_text_grounding_refiner(
     confidence_threshold=0.3,
     iters=3,
 ):
-    """Refine masks using SAM3 text grounding.
-
-    Combines text-grounded segmentation with geometric prompt refinement
-    to improve mask quality.
-
-    Args:
-        image_path: Path to the input image.
-        coarse_masks: List of (H, W) numpy arrays.
-        sam3_model: SAM3 model dict.
-        processor: Sam3Processor instance.
-        text_prompt: Text description for grounding.
-        confidence_threshold: Minimum confidence for text-grounded masks.
-        iters: Number of refinement iterations.
-
-    Returns:
-        refined_masks: List of (H, W) refined binary masks.
-    """
+    """Refine masks using SAM3 text grounding."""
     if isinstance(coarse_masks, list):
         coarse_masks = np.stack(coarse_masks, axis=0)
 
@@ -73,8 +48,9 @@ def sam3_text_grounding_refiner(
 
     text_masks = []
     if text_result is not None and "masks" in text_result:
-        for i, (mask, score) in enumerate(
-            zip(text_result["masks"], text_result.get("scores", [1.0] * len(text_result["masks"])))
+        for mask, score in zip(
+            text_result["masks"],
+            text_result.get("scores", [1.0] * len(text_result["masks"])),
         ):
             if score >= confidence_threshold:
                 text_masks.append(mask)
