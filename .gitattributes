@@ -1,0 +1,5 @@
+*.jpg binary
+*.png binary
+*.pth binary
+*.pt binary
+*.py linguist-language=Python

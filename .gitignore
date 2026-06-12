@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+conda-env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data & outputs
+*.pth
+*.pt
+*.ckpt
+outputs/
+results/
+logs/
+wandb/
+
+# Large files
+*.mp4
+*.avi
+*.zip
+*.tar.gz
+
+# Generated output images
+generated_person_processing/output/**/*.png
+generated_person_processing/output/**/*.jpg
+generated_person_processing/output/**/*.jpeg
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
