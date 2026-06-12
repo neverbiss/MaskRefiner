@@ -1,8 +1,11 @@
 """Demo: SAM mask refinement."""
+
 import argparse
+
 import numpy as np
 from PIL import Image
 from segment_anything import sam_model_registry
+
 from maskforge import sam_refiner
 
 
@@ -24,9 +27,7 @@ def main():
     init_mask = (init_mask > 0).astype(np.uint8)
 
     # Refine
-    refined, ious, _ = sam_refiner(
-        args.image, [init_mask], sam, iters=args.iters
-    )
+    refined, ious, _ = sam_refiner(args.image, [init_mask], sam, iters=args.iters)
 
     # Save result
     Image.fromarray(255 * refined[0].astype(np.uint8)).save(args.output)
