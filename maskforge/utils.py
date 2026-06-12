@@ -24,9 +24,7 @@ def gaussian_2d(shape, gamma_x=1, gamma_y=1):
     """Create a 2D Gaussian kernel."""
     m, n = [(ss - 1.0) / 2.0 for ss in shape]
     y, x = np.ogrid[-m : m + 1, -n : n + 1]
-    h = np.exp(
-        -(x * x / (2 * gamma_x * gamma_x) + y * y / (2 * gamma_y * gamma_y))
-    )
+    h = np.exp(-(x * x / (2 * gamma_x * gamma_x) + y * y / (2 * gamma_y * gamma_y)))
     return h
 
 
@@ -43,9 +41,9 @@ def get_mask_embed(mask, img_embed):
     mask_resize = F.interpolate(
         mask[None, None].float(), size=(resize_H, resize_W), mode="nearest"
     )
-    query_embed = (
-        img_embed[:, :, :resize_H, :resize_W] * mask_resize
-    ).sum(dim=(-2, -1)) / mask_resize.sum()
+    query_embed = (img_embed[:, :, :resize_H, :resize_W] * mask_resize).sum(
+        dim=(-2, -1)
+    ) / mask_resize.sum()
     return query_embed, mask_resize
 
 
@@ -66,8 +64,7 @@ def extract_bboxes_expand(image_embeddings, mask, margin=0):
         )
         image_embeddings_resize = image_embeddings_resize.permute(0, 2, 3, 1)
         image_embeddings_resize = (
-            image_embeddings_resize
-            / image_embeddings_resize.norm(dim=-1, keepdim=True)
+            image_embeddings_resize / image_embeddings_resize.norm(dim=-1, keepdim=True)
         )
 
     boxes = []
@@ -148,9 +145,7 @@ def extract_bboxes_expand(image_embeddings, mask, margin=0):
 
         x1, x2, y1, y2 = final_x1, final_x2, final_y1, final_y2
         boxes.append(torch.tensor([x1, y1, x2, y2]))
-        box_mask = torch.zeros((m.shape[0], m.shape[1])).to(
-            image_embeddings.device
-        )
+        box_mask = torch.zeros((m.shape[0], m.shape[1])).to(image_embeddings.device)
         box_mask[y1:y2, x1:x2] = 1
         box_masks.append(box_mask)
         areas.append(1.0 * (x2 - x1) * (y2 - y1))
