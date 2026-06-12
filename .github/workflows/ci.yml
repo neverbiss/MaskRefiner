@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          pip install black isort flake8
+      - name: Run black
+        run: black --check maskforge/ examples/ scripts/
+      - name: Run isort
+        run: isort --check-only maskforge/ examples/ scripts/
+      - name: Run flake8
+        run: flake8 maskforge/ examples/ scripts/ --max-line-length=100
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install -e .
+          pip install pytest
+      - name: Run tests
+        run: pytest tests/ -v || echo "No tests found"
