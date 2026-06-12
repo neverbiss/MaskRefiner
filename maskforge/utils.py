@@ -14,49 +14,24 @@ import torch.nn.functional as F
 
 
 def prepare_image(image, transform, device):
-    """Apply SAM's ResizeLongestSide transform to an image array.
-
-    Args:
-        image: (H, W, 3) RGB uint8 numpy array.
-        transform: A ``ResizeLongestSide`` instance.
-        device: Target torch device.
-
-    Returns:
-        (3, H', W') float tensor ready for the image encoder.
-    """
+    """Apply SAM's ResizeLongestSide transform to an image array."""
     image = transform.apply_image(image)
     image = torch.as_tensor(image, device=device)
     return image.permute(2, 0, 1).contiguous()
 
 
 def gaussian_2d(shape, gamma_x=1, gamma_y=1):
-    """Create a 2D Gaussian kernel.
-
-    Args:
-        shape: (height, width) of the kernel.
-        gamma_x: Standard deviation along x.
-        gamma_y: Standard deviation along y.
-
-    Returns:
-        2D numpy array of the Gaussian.
-    """
+    """Create a 2D Gaussian kernel."""
     m, n = [(ss - 1.0) / 2.0 for ss in shape]
     y, x = np.ogrid[-m : m + 1, -n : n + 1]
-    h = np.exp(-(x * x / (2 * gamma_x * gamma_x) + y * y / (2 * gamma_y * gamma_y)))
+    h = np.exp(
+        -(x * x / (2 * gamma_x * gamma_x) + y * y / (2 * gamma_y * gamma_y))
+    )
     return h
 
 
 def get_mask_embed(mask, img_embed):
-    """Extract a mask embedding by spatial pooling of image features.
-
-    Args:
-        mask: (H, W) binary mask (numpy or tensor).
-        img_embed: (1, C, h, w) image embedding tensor.
-
-    Returns:
-        query_embed: (1, C) pooled mask embedding.
-        mask_resize: (1, 1, h', w') resized mask used for pooling.
-    """
+    """Extract a mask embedding by spatial pooling of image features."""
     orig_H, orig_W = mask.shape[:2]
     embed_H, embed_W = img_embed.shape[-2:]
     if orig_H >= orig_W:
@@ -68,30 +43,14 @@ def get_mask_embed(mask, img_embed):
     mask_resize = F.interpolate(
         mask[None, None].float(), size=(resize_H, resize_W), mode="nearest"
     )
-    query_embed = (img_embed[:, :, :resize_H, :resize_W] * mask_resize).sum(
-        dim=(-2, -1)
-    ) / mask_resize.sum()
+    query_embed = (
+        img_embed[:, :, :resize_H, :resize_W] * mask_resize
+    ).sum(dim=(-2, -1)) / mask_resize.sum()
     return query_embed, mask_resize
 
 
 def extract_bboxes_expand(image_embeddings, mask, margin=0):
-    """Compute bounding boxes from masks with optional CEBox expansion.
-
-    When ``margin > 0``, the bounding box is expanded by checking cosine
-    similarity between the mask embedding and surrounding image embeddings
-    (Context-Embedding Box strategy).
-
-    Args:
-        image_embeddings: (1, C, h, w) image feature map.
-        mask: (N, H, W) binary mask tensor.
-        margin: Similarity threshold for CEBox expansion (0 = no expansion).
-
-    Returns:
-        boxes: (N, 4) bounding boxes in XYXY format.
-        box_masks: (N, H, W) binary box masks.
-        areas: (N,) box areas.
-        expand_list: (N,) binary flag indicating whether each box was expanded.
-    """
+    """Compute bounding boxes from masks with optional CEBox expansion."""
     ori_h, ori_w = mask.shape[-2:]
     if margin > 0 and ori_h > 0 and ori_w > 0:
         embed_H, embed_W = image_embeddings.shape[-2:]
@@ -107,7 +66,8 @@ def extract_bboxes_expand(image_embeddings, mask, margin=0):
         )
         image_embeddings_resize = image_embeddings_resize.permute(0, 2, 3, 1)
         image_embeddings_resize = (
-            image_embeddings_resize / image_embeddings_resize.norm(dim=-1, keepdim=True)
+            image_embeddings_resize
+            / image_embeddings_resize.norm(dim=-1, keepdim=True)
         )
 
     boxes = []
@@ -188,7 +148,9 @@ def extract_bboxes_expand(image_embeddings, mask, margin=0):
 
         x1, x2, y1, y2 = final_x1, final_x2, final_y1, final_y2
         boxes.append(torch.tensor([x1, y1, x2, y2]))
-        box_mask = torch.zeros((m.shape[0], m.shape[1])).to(image_embeddings.device)
+        box_mask = torch.zeros((m.shape[0], m.shape[1])).to(
+            image_embeddings.device
+        )
         box_mask[y1:y2, x1:x2] = 1
         box_masks.append(box_mask)
         areas.append(1.0 * (x2 - x1) * (y2 - y1))
@@ -201,23 +163,7 @@ def extract_bboxes_expand(image_embeddings, mask, margin=0):
 
 
 def extract_points(pred_masks, add_neg=True, use_mask=True, gamma=1.0):
-    """Extract point prompts from masks using geodesic distance transforms.
-
-    For each mask, finds:
-      - The positive point farthest from the mask boundary (interior center).
-      - Optionally, the negative point farthest from the mask (exterior center).
-
-    Args:
-        pred_masks: (N, H, W) binary masks.
-        add_neg: Whether to add negative point prompts.
-        use_mask: Whether to generate Gaussian mask prompts.
-        gamma: Gaussian spread parameter.
-
-    Returns:
-        point_coords: (N, 1+add_neg, 2) point coordinates (x, y).
-        point_labels: (N, 1+add_neg) point labels (1=positive, 0=negative).
-        gaus_dt: (N, H, W) geodesic distance transform for mask prompts.
-    """
+    """Extract point prompts from masks using geodesic distance transforms."""
     device = pred_masks.device
     pred_masks_np = pred_masks.cpu().numpy()
     point_coords = []
@@ -272,7 +218,6 @@ def extract_points(pred_masks, add_neg=True, use_mask=True, gamma=1.0):
 
         # Gaussian mask prompt
         if use_mask:
-            # Create Gaussian from distance transform
             gaus = gaussian_2d(
                 (mask.shape[0], mask.shape[1]),
                 gamma_x=gamma * mask.shape[1] / 100,
@@ -290,21 +235,16 @@ def extract_points(pred_masks, add_neg=True, use_mask=True, gamma=1.0):
     return point_coords, point_labels, gaus_dt
 
 
-def extract_mask(pred_masks, gaus_dt, target_size, is01=True, strength=15, device="cuda", expand_list=None):
-    """Prepare Gaussian mask prompts for SAM's mask decoder.
-
-    Args:
-        pred_masks: (N, H, W) binary masks.
-        gaus_dt: (N, H, W) Gaussian distance transform.
-        target_size: (H', W') target size for SAM's mask input.
-        is01: Whether mask values are in [0, 1].
-        strength: Amplitude scaling for mask prompts.
-        device: Target device.
-        expand_list: (N,) binary flags for CEBox expansion.
-
-    Returns:
-        mask_inputs: (N, 1, H', W') Gaussian mask prompts.
-    """
+def extract_mask(
+    pred_masks,
+    gaus_dt,
+    target_size,
+    is01=True,
+    strength=15,
+    device="cuda",
+    expand_list=None,
+):
+    """Prepare Gaussian mask prompts for SAM's mask decoder."""
     mask_inputs = []
     for i in range(pred_masks.shape[0]):
         m = pred_masks[i].float()
