@@ -23,7 +23,7 @@ def prepare_image(image, transform, device):
 def gaussian_2d(shape, gamma_x=1, gamma_y=1):
     """Create a 2D Gaussian kernel."""
     m, n = [(ss - 1.0) / 2.0 for ss in shape]
-    y, x = np.ogrid[-m : m + 1, -n : n + 1]
+    y, x = np.ogrid[-m:m + 1, -n:n + 1]
     h = np.exp(-(x * x / (2 * gamma_x * gamma_x) + y * y / (2 * gamma_y * gamma_y)))
     return h
 
