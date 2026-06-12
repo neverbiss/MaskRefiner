@@ -20,7 +20,7 @@ jobs:
       - name: Run black
         run: black --check maskforge/ examples/ scripts/
       - name: Run isort
-        run: isort --check-only maskforge/ examples/ scripts/
+        run: isort --check-only --profile black maskforge/ examples/ scripts/
       - name: Run flake8
         run: flake8 maskforge/ examples/ scripts/ --max-line-length=100
 
